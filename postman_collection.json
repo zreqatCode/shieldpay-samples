@@ -1,0 +1,385 @@
+{
+	"info": {
+		"_postman_id": "83fdd1c5-9e96-4de6-8128-2e0e7557146d",
+		"name": "Payment API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "24941939"
+	},
+	"item": [
+		{
+			"name": "Authenticate",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var res = pm.response.json();",
+							"",
+							"pm.collectionVariables.set('accessToken', res.data.accessToken);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Signature",
+						"value": "OxbfcBKLsk8x4DwKz1c4V4/keI5L+vh7PdVVesPNmZQuUST6FU7DIr5WhUkIQZK3hFyHzURmzWGF8q7fL7oYSuFGjP9udgGChgMHdV3Yt7HAr1zYh+0ZDjhQEd/69H82uoDsOMZGj39urTcW+dX9Nl5xxMDkKRyfKQfWWOdU/Zy54zqqigytyrXEgFJmEzs4GCW3kMa71Y7iBCHPpjEO6gw9+wZxM6IUdhYPBRLOdQMipNNzUFEnTYJIN/eRGFi89Q0imFUZb4Zz89wr/+iVh3NAgrccdT9GexIMYAcIB5a6zkvDluePq2cgKQ/2s5laUS6b7DhhmoaPTz2FlA8r+Q==",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"data\": \"hAzlCRRA8N65AR6LOF3NYs7uHVkXtl9dBLnVSYEnFk5DKZ77h1CjdL+Yc66lEBJPZUqDh1iWgPNc+GpvgPmZyIMSrgEn6OxEPyq3ZMUdMhUq9Cz7e9alq5zwnT5B5TiSCnCjJac/YWp0KYNYUPJSYKhxK9VmHIn5ue42xcDvB4WNzLpleZEPbxr16DDyusJ8TQVyFxhVHUoZKYIv176pOqd4L97kqk1uyZLqMYD+qqWpx2803470C1GQ5msnnsNvKMhnevhUmg3sImJ8B7ySBYtWCp7viYOU2/AmB0Pr4qhQEZreMVj9ddolve7HsckzBcJbF82anbE6MsgAqDDF3A==\"\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9000/api/oauth/merchant/token",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9000",
+					"path": [
+						"api",
+						"oauth",
+						"merchant",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Payment Intent",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const moment = require('moment');",
+							"",
+							"let expiryDate = moment.utc().add(20, 'minutes').format('YYYY-MM-DD HH:mm:ss');",
+							"",
+							"pm.environment.set(\"expiryDate\", expiryDate);",
+							"",
+							"",
+							"function encodeTime(now, len) {",
+							"    let str = \"\";",
+							"    for (let i = len - 1; i >= 0; i--) {",
+							"        str += \"0123456789ABCDEFGHJKMNPQRSTVWXYZ\".charAt((now >> (i * 5)) & 31);",
+							"    }",
+							"    return str;",
+							"}",
+							"",
+							"function encodeRandom(len) {",
+							"    let str = \"\";",
+							"    for (let i = 0; i < len; i++) {",
+							"        str += \"0123456789ABCDEFGHJKMNPQRSTVWXYZ\".charAt(Math.floor(Math.random() * 32));",
+							"    }",
+							"    return str;",
+							"}",
+							"",
+							"function generateULID() {",
+							"    const now = Date.now();",
+							"    const timePart = encodeTime(now, 10);",
+							"    const randomPart = encodeRandom(16);",
+							"    return timePart + randomPart;",
+							"}",
+							"",
+							"const ulid = generateULID();",
+							"pm.environment.set(\"ulid\", ulid);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"content-type": true,
+					"accept": true
+				}
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "X-Request-Id",
+						"value": "{{ulid}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"referenceId\": \"REF-1001\",\n    \"amount\": \"100\",\n    \"currencyCode\": \"USD\",\n    \"countryCode\": \"US\",\n    \"languageCode\": \"AR\",\n    \"callbackUrl\": \"http://localhost:5000/api/v1/payment/simulator/callback?ref=zreqatRefrenceNumberId1234\",\n    \"webhookUrl\": \"http://localhost:5000/api/v1/payment/simulator/webhook\",\n    \"expiryDate\": \"{{expiryDate}}\",\n    \"userFirstName\": \"John\",\n    \"userLastName\": \"Doe\",\n    \"userEmail\": \"test@test3.com\",\n    \"userMobile\": \"2025550173\",\n    \"ipAddress\": \"127.0.0.1\",\n    \"transactionMode\": \"test\",\n    \"address\": \"street 1\",\n    \"city\": \"amman\",\n    \"paymentOptionCode\":\"cards\",\n    \"intentType\": \"ONLINE\",\n    \"orderDescription\": \"T-shirt with Shoes\",\n    \"allowedPaymentNetworks\":[\"visa\", \"mastercard\"],\n    \"metadata\": {\"test\": \"test\", \"tes2t\": \"test2\"},\n    \"orderDetails\": [\n    {\n        \"itemDescription\" : \"itemDescription\",\n        \"price\": 10,\n        \"itemName\" : \"T shirt Collection 2025\",\n        \"quantity\" : 10\n    }\n    \n    ]\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/v1/payment/intent",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"v1",
+						"payment",
+						"intent"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Payment Inquiry Request (BY Request ID)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"content-type": true,
+					"accept": true
+				}
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:5000/api/v1/payment/inquiry/request/6ZVZVK9QYTS3V7PPDNCXYSA4K6",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"v1",
+						"payment",
+						"inquiry",
+						"request",
+						"6ZVZVK9QYTS3V7PPDNCXYSA4K6"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Payment Inquiry Request (BY Payment ID)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"content-type": true,
+					"accept": true
+				}
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:5000/api/v1/payment/inquiry/67d4ab39dff40d5a21425a80",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"v1",
+						"payment",
+						"inquiry",
+						"67d4ab39dff40d5a21425a80"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Payment Refund Request (BY Request ID)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//    \"currencyCode\": \"PKR\",",
+							"//   \"countryCode\": \"PK\",",
+							"",
+							"let response = pm.response.json();",
+							"",
+							"// Check if the response contains the redirectLink",
+							"if (response.data && response.data.redirectLink) {",
+							"    let redirectLink = response.data.redirectLink;",
+							"",
+							"    // Log the link in Postman Console",
+							"    console.log(\"Redirect Link:\", redirectLink);",
+							"",
+							"    // Open the link in default browser (Postman can't open Chrome directly)",
+							"    postman.setNextRequest(redirectLink);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"content-type": true,
+					"accept": true
+				}
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"amount\": 10,\n    \"reason\" : \"Test refund\"\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/v1/payment/refund/request/6ZVZVK9QYTS3V7PPDNCXYSA4K6",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"v1",
+						"payment",
+						"refund",
+						"request",
+						"6ZVZVK9QYTS3V7PPDNCXYSA4K6"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{accessToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
