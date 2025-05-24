@@ -1,0 +1,352 @@
+
+openapi: 3.0.0
+info:
+  title: Shield Pay API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:5000
+    description: Payment Backend
+  - url: http://localhost:9000
+    description: Authentication Backend
+
+paths:
+  /api/oauth/merchant/token:
+    post:
+      tags:
+        - Authentication
+      summary: Obtain Merchant Access Token
+      description: Securely verifies merchant credentials and returns an access token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: string
+                  description: Encrypted RSA payload containing clientId, clientSecret, and registeredClient.
+                  example: hAzlCRRA8N65AR6LOF3N...
+      parameters:
+        - name: X-Signature
+          in: header
+          required: true
+          schema:
+            type: string
+            description: RSA-SHA256 signature (Base64-encoded) of the original unencrypted payload
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            example: application/json
+            description: Must be application/json
+      responses:
+        '200':
+          description: Access token response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  data:
+                    type: object
+                    properties:
+                      accessTokenExpiresAt:
+                        type: integer
+                        description: Token expiry duration in seconds
+                      accessToken:
+                        type: string
+                        description: JWT access token
+                      tokenType:
+                        type: string
+                        description: Token type (e.g. Bearer)
+                      durationIn:
+                        type: string
+                        description: Duration unit (e.g. Seconds)
+                  message:
+                    type: string
+                    example: success
+        '400':
+          description: Invalid signature or encrypted data
+          content:
+            application/json:
+              examples:
+                InvalidSignature:
+                  summary: Invalid Signature
+                  value:
+                    code: 400
+                    data: invalid signature
+                    message: error
+                InvalidData:
+                  summary: Invalid Data
+                  value:
+                    code: 400
+                    data: invalid encrypted data
+                    message: error
+
+  /api/v1/payment/intent:
+    post:
+      tags:
+        - Payment API
+      summary: Create Payment Intent
+      description: Create a payment intent with order and user details.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                referenceId:
+                  type: string
+                  description: Unique Merchant reference ID for this payment
+                amount:
+                  type: string
+                  description: Amount to charge in major currency units
+                currencyCode:
+                  type: string
+                  description: ISO 4217 currency code (e.g., USD)
+                countryCode:
+                  type: string
+                  description: ISO 3166-1 country code (e.g., US)
+                languageCode:
+                  type: string
+                  description: Language preference (e.g., EN, AR)
+                callbackUrl:
+                  type: string
+                  description: URL to redirect the user after payment
+                webhookUrl:
+                  type: string
+                  description: URL to receive payment event notifications
+                expiryDate:
+                  type: string
+                  description: Expiry timestamp in UTC format 'yy-mm-dd hh:mm:ss', must be within 1 hour from request time
+                userFirstName:
+                  type: string
+                  description: User's first name
+                userLastName:
+                  type: string
+                  description: User's last name
+                userEmail:
+                  type: string
+                  description: User's email address
+                userMobile:
+                  type: string
+                  description: User's mobile phone number (must be valid and belong to the country)
+                ipAddress:
+                  type: string
+                  description: IP address of the user
+                transactionMode:
+                  type: string
+                  description: Transaction mode (e.g., test, prod)
+                address:
+                  type: string
+                  description: Billing street address
+                city:
+                  type: string
+                  description: Billing city
+                paymentOptionCode:
+                  type: string
+                  description: Payment method code (e.g., cards,applepay,paypal,pos)
+                intentType:
+                  type: string
+                  description: Intent type (e.g., AUTHENTICATION, ONLINE,INSTALLMENT,RECURRING)
+                orderDescription:
+                  type: string
+                  description: Description of the order
+                allowedPaymentNetworks:
+                  type: array
+                  items:
+                    type: string
+                  description: List of accepted payment networks (visa,mastercard,amex etc...)
+                metadata:
+                  type: object
+                  additionalProperties: true
+                  description: Custom key-value metadata max 10 keys and the value type is string e.g. {"test"\:"test"}
+                orderDetails:
+                  type: array
+                  description: Array of order line items
+                  items:
+                    type: object
+                    properties:
+                      itemDescription:
+                        type: string
+                        description: Description of the item
+                      price:
+                        type: number
+                        description: Price of the item (The total calculation of prices musst be equal the amount e.g. qty 10 and price 10 so the amount must be = 100 )
+                      itemName:
+                        type: string
+                        description: Name of the item
+                      quantity:
+                        type: integer
+                        description: Quantity of the item
+      parameters:
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            description: Must be application/json
+            example: application/json
+        - name: Accept
+          in: header
+          required: true
+          schema:
+            type: string
+            description: Accept header, usually application/json
+            example: application/json
+        - name: X-Request-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            description: Unique request ID (e.g., ULID) for Idempotency
+            example: 01HZY3X9WD27Z3X0BPX3CTH1QN
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+
+  /api/v1/payment/inquiry/request/{requestId}:
+    get:
+      tags:
+        - Payment API
+      summary: Payment Inquiry Request (BY Request ID)
+      description: Retrieve payment details using the request ID.
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Unique request ID
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            description: Must be application/json
+            example: application/json
+        - name: Accept
+          in: header
+          required: true
+          schema:
+            type: string
+            description: Accept header, usually application/json
+            example: application/json
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+            description: Authorization header, usually Bearer XXXXXXX
+            example: Bearer XXXXXXX
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+
+  /api/v1/payment/inquiry/{paymentId}:
+    get:
+      tags:
+        - Payment API
+      summary: Payment Inquiry Request (BY Payment ID)
+      description: Retrieve payment details using the payment ID.
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Unique payment ID
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            description: Must be application/json
+            example: application/json
+        - name: Accept
+          in: header
+          required: true
+          schema:
+            type: string
+            description: Accept header, usually application/json
+            example: application/json
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+            description: Authorization header, usually Bearer XXXXXXX
+            example: Bearer XXXXXXX
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+
+  /api/v1/payment/refund/request/{requestId}:
+    post:
+      tags:
+        - Payment API
+      summary: Payment Refund Request (BY Request ID)
+      description: Submit a refund request for a specific payment by request ID.
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Unique request ID associated with the payment
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            description: Must be application/json
+            example: application/json
+        - name: Accept
+          in: header
+          required: true
+          schema:
+            type: string
+            description: Accept header, usually application/json
+            example: application/json
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+            description: Authorization header, usually Bearer XXXXXXX
+            example: Bearer XXXXXXX
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Refund request body
+              properties:
+                amount:
+                  type: number
+                  description: Amount to be refunded
+                reason:
+                  type: string
+                  description: Reason for the refund
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
