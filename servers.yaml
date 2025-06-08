@@ -1,0 +1,4 @@
+- url: http://localhost:5000
+  description: Payment Backend
+- url: http://localhost:9000
+  description: Authentication Backend
