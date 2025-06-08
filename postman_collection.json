@@ -1,1 +1,381 @@
-
+{
+  "info": {
+    "_postman_id": "83fdd1c5-9e96-4de6-8128-2e0e7557146d",
+    "name": "Payment API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "24941939"
+  },
+  "item": [
+    {
+      "name": "Authenticate",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var res = pm.response.json();",
+              "",
+              "pm.collectionVariables.set('accessToken', res.data.accessToken);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Signature",
+            "value": "{{AuthSignature}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"data\": \"{{AuthEncryptedData}}\"\n}\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{AuthBaseURL}}/api/oauth/merchant/token",
+          "host": [
+            "{{AuthBaseURL}}"
+          ],
+          "path": [
+            "api",
+            "oauth",
+            "merchant",
+            "token"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Payment Intent",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "",
+              "",
+              "",
+              ""
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "const moment = require('moment');",
+              "",
+              "let expiryDate = moment.utc().add(20, 'minutes').format('YYYY-MM-DD HH:mm:ss');",
+              "",
+              "pm.environment.set(\"expiryDate\", expiryDate);",
+              "",
+              "",
+              "function encodeTime(now, len) {",
+              "    let str = \"\";",
+              "    for (let i = len - 1; i >= 0; i--) {",
+              "        str += \"0123456789ABCDEFGHJKMNPQRSTVWXYZ\".charAt((now >> (i * 5)) & 31);",
+              "    }",
+              "    return str;",
+              "}",
+              "",
+              "function encodeRandom(len) {",
+              "    let str = \"\";",
+              "    for (let i = 0; i < len; i++) {",
+              "        str += \"0123456789ABCDEFGHJKMNPQRSTVWXYZ\".charAt(Math.floor(Math.random() * 32));",
+              "    }",
+              "    return str;",
+              "}",
+              "",
+              "function generateULID() {",
+              "    const now = Date.now();",
+              "    const timePart = encodeTime(now, 10);",
+              "    const randomPart = encodeRandom(16);",
+              "    return timePart + randomPart;",
+              "}",
+              "",
+              "const ulid = generateULID();",
+              "pm.environment.set(\"ulid\", ulid);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disabledSystemHeaders": {
+          "content-type": true,
+          "accept": true
+        }
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "X-Request-Id",
+            "value": "{{ulid}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"referenceId\": \"REF-1001\",\n    \"amount\": \"100\",\n    \"currencyCode\": \"SAR\",\n    \"countryCode\": \"SA\",\n    \"languageCode\": \"AR\",\n    \"callbackUrl\": \"{{PaymentGatewayURL}}/api/v1/payment/simulator/callback\",\n    \"webhookUrl\": \"{{PaymentGatewayURL}}/api/v1/payment/simulator/webhook\",\n    \"expiryDate\": \"{{expiryDate}}\",\n    \"userFirstName\": \"John\",\n    \"userLastName\": \"Doe\",\n    \"userEmail\": \"test@test3.com\",\n    \"userMobile\": \"0551234567\",\n    \"ipAddress\": \"127.0.0.1\",\n    \"transactionMode\": \"test\",\n    \"address\": \"street 1\",\n    \"city\": \"amman\",\n    \"intentType\": \"ONLINE\",\n    \"orderDescription\": \"T-shirt with Shoes\",\n    \"allowedPaymentNetworks\":[\"visa\", \"mastercard\"],\n    \"metadata\": {\"test\": \"test\", \"tes2t\": \"test2\"},\n    \"orderDetails\": [\n    {\n        \"itemDescription\" : \"itemDescription\",\n        \"price\": 10,\n        \"itemName\" : \"T shirt Collection 2025\",\n        \"quantity\" : 10\n    }\n    \n    ]\n}\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{PaymentGatewayURL}}/api/v1/payment/intent",
+          "host": [
+            "{{PaymentGatewayURL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "payment",
+            "intent"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Payment Inquiry Request (BY Request ID)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disabledSystemHeaders": {
+          "content-type": true,
+          "accept": true
+        }
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{PaymentGatewayURL}}/api/v1/payment/inquiry/request/6ZVZVK9QYTS3V7PPDNCXYSA4K6",
+          "host": [
+            "{{PaymentGatewayURL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "payment",
+            "inquiry",
+            "request",
+            "6ZVZVK9QYTS3V7PPDNCXYSA4K6"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Payment Inquiry Request (BY Payment ID)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disabledSystemHeaders": {
+          "content-type": true,
+          "accept": true
+        }
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{PaymentGatewayURL}}/api/v1/payment/inquiry/67d4ab39dff40d5a21425a80",
+          "host": [
+            "{{PaymentGatewayURL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "payment",
+            "inquiry",
+            "67d4ab39dff40d5a21425a80"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Payment Refund Request (BY Request ID)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disabledSystemHeaders": {
+          "content-type": true,
+          "accept": true
+        }
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"amount\": 10,\n    \"reason\" : \"Test refund\"\n}\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{PaymentGatewayURL}}/api/v1/payment/refund/request/6ZVZVK9QYTS3V7PPDNCXYSA4K6",
+          "host": [
+            "{{PaymentGatewayURL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "payment",
+            "refund",
+            "request",
+            "6ZVZVK9QYTS3V7PPDNCXYSA4K6"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "PaymentGatewayURL",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "AuthBaseURL",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "AuthSignature",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "AuthEncryptedData",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
